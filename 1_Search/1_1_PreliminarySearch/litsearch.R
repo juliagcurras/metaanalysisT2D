@@ -1,0 +1,180 @@
+######################################################-
+
+############   TRIAL LITSEARCHR PACKAGE    ###########
+
+######################################################-
+
+# Julia G Currás - 13/02/2025
+
+# devtools::install_github("elizagrames/litsearchr", ref="main")
+library(litsearchr)
+raizDir <- getwd()
+setwd(raizDir)
+
+
+# MORE RESTRICTIVE APPROACH ####
+
+## 1. Load data and remove duplicated papers ####
+search_directory <- paste0(raizDir, "/ris")
+naiveimport <- litsearchr::import_results(directory = search_directory,  
+                                          verbose = TRUE)
+naiveresults <-litsearchr::remove_duplicates(naiveimport, 
+                                             field = "title", 
+                                             method = "string_osa")
+
+## 2. Search potential keywords ####
+rakedkeywords <-
+  litsearchr::extract_terms(
+    text = paste(naiveresults$title, naiveresults$abstract),
+    method = "fakerake",
+    min_freq = 5,
+    ngrams = TRUE,
+    min_n = 2,
+    language = "English"
+  )
+
+taggedkeywords <-
+  litsearchr::extract_terms(
+    keywords = naiveresults$keywords,
+    method = "tagged",
+    min_freq = 5,
+    ngrams = TRUE,
+    min_n = 2,
+    language = "English"
+  )
+
+
+## 3. Build a co-ocurrence network ####
+all_keywords <- unique(append(taggedkeywords, rakedkeywords))
+
+naivedfm <-
+  litsearchr::create_dfm(
+    elements = paste(naiveresults$title, naiveresults$abstract, naiveresults$keywords),
+    features = all_keywords
+  ) # matriz con filas = artículos, columnas = termos, e dentro 0 ou 1 si ese termo aparece nese artículo (en abstract, title ou keywords)
+
+naivegraph <-
+  litsearchr::create_network(
+    search_dfm = naivedfm,
+    min_studies = 12,
+    min_occ = 2
+  )
+
+par(mar = c(1,1,1,1))
+plot(naivegraph, 
+     layout = igraph::layout_with_fr, 
+     vertex.size = 2, # Cambia el tamaño de los nodos
+     vertex.label.cex = 1, # Cambia el tamaño de las etiquetas
+     vertex.label.dist = 1.5,
+     vertex.label.color = "#6A1B9A",  # Etiquetas en púrpura oscuro
+     vertex.frame.color = "#FFB300",  # Borde y nodo amarillo mostaza
+     vertex.color = "#FFB300",
+     edge.color = "gray",
+     vertex.label.dist =20, # Aumenta la distancia entre las etiquetas y los nodos
+     margin = 0.0001)
+
+
+## 4. Network reduction by cut-off selection ####
+cutoff <-
+  litsearchr::find_cutoff(
+    naivegraph,
+    method = "cumulative",
+    percent = .80,
+    imp_method = "strength"
+  )
+
+reducedgraph <-
+  litsearchr::reduce_graph(naivegraph, cutoff_strength = cutoff[1])
+
+par(mar = c(1,1,1,1))
+plot(reducedgraph, 
+     layout = igraph::layout_with_fr, 
+     vertex.size = 2, # Cambia el tamaño de los nodos
+     vertex.label.cex = 1, # Cambia el tamaño de las etiquetas
+     vertex.label.dist = 1.5,
+     vertex.label.color = "#000000",  # Etiquetas en negro
+     vertex.frame.color = "#FF7043",  # Borde y nodo naranja brillante
+     vertex.color = "#FF7043",
+     edge.color = "gray",
+     vertex.label.dist =20, # Aumenta la distancia entre las etiquetas y los nodos
+     margin = 0.0001)
+
+
+searchterms <- litsearchr::get_keywords(reducedgraph)
+
+output <- list(nTotal = nrow(naiveimport), 
+               nUnique = nrow(naiveresults), 
+               nKeywords = length(all_keywords), 
+               naiveGraph = naivegraph, 
+               threshold = cutoff, 
+               reducedGraph = reducedgraph,
+               searchTerms = searchterms)
+
+
+## 5. Group terms into concepts - MANUALLY ####
+write.csv(searchterms, paste0(raizDir, "TERMS_RestrictiveApproachLitSearch.csv"))
+
+
+
+#-................... Manually group and select terms in the csv ..........-#
+
+
+## 6. Select and add new terms ####
+grouped_terms <- read.csv(paste0(raizDir, "/TERMS_RestrictiveApproachLitSearch_reduced.csv"), sep = ";")[,-1]
+colnames(grouped_terms)[1] <- "term"
+
+# extract the woodpecker terms from the csv
+analysis_terms <- grouped_terms$term[grep("analysis", grouped_terms$group)]
+# join together a list of manually generated woodpecker terms with the ones from the csv
+originalTerms <- c("proteomic*", "proteomic analysis", "LC/MS-MS", 
+                   "label-free SWATH", "SWATH-MS", "data independent adquisition",
+                   "DIA", "DIA-SWATH", "Data dependent adquisition", "DDA", "shotgun protemic*")
+newTerms <- c("tandem spectrometry", "tandem mass spectrometry")
+analysis <- unique(append(c(originalTerms, newTerms), analysis_terms))
+
+# repeat this for all concept groups
+outcome_terms <- grouped_terms$term[grep("outcome", grouped_terms$group)]
+originalTerms <- c("biomarkers", "biomarker", "significant protein",
+                   "differential expressed protein", "DE protein", 
+                   "protein biomarker" )
+newTerms <- c("upregulated protein", "downregulated protein",
+              "significantly higher protein", "significantly increased protein",
+              "significantly lower protein", "significantly reduced protein"
+              )
+outcome <- unique(append(c(newTerms, originalTerms), outcome_terms))
+
+
+disease_terms <- grouped_terms$term[grep("disease", grouped_terms$group)]
+originalTerms <- c("DM2", "T2DM", "type II diabetes mellitus",
+                   "diabetes mellitus type 2", "type 2 diabetes mellitus", 
+                   "type 2 diabetes", "type II diabetes", "diabetic condition"
+)
+disease <- unique(append(originalTerms, disease_terms))
+
+# merge them into a list
+mysearchterms <- list(disease, outcome, analysis)
+
+
+## 7. Get boolean searches ####
+my_search <-
+  litsearchr::write_search(
+    groupdata = mysearchterms,
+    languages = "English",
+    stemming = TRUE,
+    closure = "none",
+    exactphrase = TRUE,
+    writesearch = FALSE,
+    verbose = TRUE
+  )
+
+my_search
+
+write.table(my_search, file = "searchEquation.txt", quote = F)
+
+
+
+
+
+
+
+                                             
