@@ -12,9 +12,9 @@ library(dplyr)
 
 
 # Loading data ####
-dfRPL <- readxl::read_xlsx(path = "peerReview_finalDocuments.xlsx", 
+dfRPL <- readxl::read_xlsx(path = "peerReview.xlsx", 
                            sheet = "PerezLois", col_names = T)
-dfJGC <- readxl::read_xlsx(path = "peerReview_finalDocuments.xlsx", 
+dfJGC <- readxl::read_xlsx(path = "peerReview.xlsx", 
                            sheet = "GarciaCurras", col_names = T)
 df <- merge(x = dfRPL, y = dfJGC, by = c("ID1", "ID2"), all = T)
 
