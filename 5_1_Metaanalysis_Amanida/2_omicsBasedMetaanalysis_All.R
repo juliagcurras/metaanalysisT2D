@@ -25,8 +25,7 @@ basal <- readxl::read_xlsx(path = "../3_Extraction/Database.xlsx",
 
 # Qualitative Analysis ####
 data <- readxl::read_xlsx(path = "../4_Processing/allProcessedProteinData.xlsx", 
-                        sheet = "Qualitative (>2 studies)", col_names = T)
-# data <- readRDS(file = "../../Data/4_Metanalisis/df_qualitative.rds")
+                        sheet = "Qualitative (protein>1 study)", col_names = T)
 
 ## Dictionary ####
 diccionary <- data %>%
@@ -87,8 +86,39 @@ explore_plot(datafile, type = "sub", counts = 3)
 ## Saving qualitative Amanida results ####
 output <- list(result = amanida_result, data = datafile)
 
-# saveRDS(object = output, file = "../../Data/4_Metanalisis/resultsQualitativeComplete.rds")
-# saveRDS(resultKEGG, file = paste0(pathToData, "functionalAnalysis/KEGG_ORA_qualitative.rds"))
+### Vote counting results ####
+# Adapted from Amanida #
+counts = 3
+type = "sub"
+trend = NULL
+trend_l = NULL
+N = NULL
+vc = NULL
+. = NULL
+cont = NULL
+lab = NULL
+dataVote <- datafile
+dt <- filter(mutate(summarise(dplyr::group_by(mutate(dplyr::group_by(
+  mutate(dataVote, trend_l = case_when(trend == -1 ~ "Down-regulated", T ~ "Up-regulated")),id), 
+  vc = sum(trend)), id, trend_l), cont = n(), total_N = sum(N), vc = unique(vc), lab = c("Vote-counting")), 
+  cont = case_when(trend_l == "Down-regulated" ~ cont * -1, T ~ cont * 1)), vc >  cuts | vc < -1 * cuts)
+# Structuration
+data_wide <- dt %>%
+  pivot_wider(names_from = trend_l, values_from = cont) %>%
+  dplyr::select(-total_N, -lab, -vc)
+dfFinal <- merge(data_wide, amanida_result@vote, all.X = T, by = "id")
+dfFinal <- merge(dfFinal, diccionario, by.x = "id", by.y = "ProteinID", all.x = T)
+dfFinal <- dfFinal %>% 
+  dplyr::select(id, Alias, everything()) %>%
+  dplyr::rename(
+    `Protein ID` = id, 
+    `Gene name` = Alias, 
+    Votes = votes, 
+    `N articles` = articles, 
+    `Vote counting` = vote_counting
+  ) %>%
+  arrange(desc(Votes))
+dfFinal[is.na(dfFinal)] <- 0
 xlsx::write.xlsx(x = as.data.frame(amanida_result@vote), 
                  col.names = T, row.names = F, append = T,
                  file = "results_Qualitative.xlsx", 
@@ -100,9 +130,8 @@ xlsx::write.xlsx(x = as.data.frame(amanida_result@vote),
 
 #.-----------------------------------------------------------------------.####
 # Quantitative ####
-# lista <- readRDS(file = "../../Data/4_Metanalisis/dfs_quantitative.rds")
 data <- readxl::read_xlsx(path = "../4_Processing/allProcessedProteinData.xlsx", 
-                          sheet = "Quantitative (>2 studies)", col_names = T)
+                          sheet = "Quantitative (protein>1 study)", col_names = T)
 basalQ <- basal[!(basal$infoPvalue == "No" & basal$infoAdjustedPvalue == "No"), ]
 basalQ <- basalQ %>% filter(ID != "1098_977") 
 
@@ -144,7 +173,7 @@ df$logFC <- as.numeric(df$logFC)
 df$logFC <- 2^df$logFC
 coln = c("Protein", "AdjPval", "logFC", "N total", "References")
 colnames(df) <- coln
-df <- df %>% filter(Protein != "Q6ZMP0") # logFC de 30, outlier fuera
+df <- df %>% filter(Protein != "Q6ZMP0") # aggregated logFC= 30, OUTLIERS, REMOVING IT SO 2734 PROTEINS
 
 df$References <- gsub(df$References, pattern = ", ", replacement = " ", fixed = T)
 # Saving
@@ -160,11 +189,17 @@ datafile <- amanida_read(
 amanida_result <- compute_amanida(datafile, comp.inf = F)
 
 ## Saving quantitative Amanida results ####
-# output <- list(result = amanida_result, data = datafile, diccionary = diccionary)
-# saveRDS(object = output, file = "../../Data/4_Metanalisis/resultsQuantitativeComplete.rds")
-xlsx::write.xlsx(x = as.data.frame(amanida_result@vote), col.names = T, row.names = F, append = F,
-                file = "results_Quantitative.xlsx", sheetName = "Vote counting")
-xlsx::write.xlsx(x = as.data.frame(amanida_result@stat), col.names = T, row.names = F, append = T,
+### Aggregated values ####
+res <- merge(amanida_result@stat , diccionary, by.x = "id", by.y = "ProteinID", all = T)
+res$trend <- factor(res$trend, levels = c(-1, 1), labels = c("Downregulated", "Upregulated"))
+res$N <- sapply(strsplit(res$reference, ";"), length)
+res <- res %>% 
+  arrange(desc(N), pval, abs(fc)) %>%
+  dplyr::select(id, Alias, everything())
+colnames(res) <- c("Protein ID", "Gene name", "Trend", 
+                   "Aggregated adjusted p-value", "Fold change (FC)", 
+                   "No. subjects", "References", "No. references")
+xlsx::write.xlsx(x = as.data.frame(res), col.names = T, row.names = F, append = F,
                 file = "results_Quantitative.xlsx", sheetName = "Metaanalysis")
 
 
@@ -188,14 +223,12 @@ vote_plot(amanida_result, counts = 5)
 amanida_result <- amanida_result_Ori
 ### Contribution analysis ####
 dfRes <- amanida_result@stat 
-tabAbs <- table(unlist(strsplit(dfRes$reference, split = "; ", fixed = T)))
-tabRel <- prop.table(tabAbs)
+tabRel <- tabAbs/length(unique(data$ProteinID))
 
 tabOut <- data.frame(Reference = names(tabRel), 
-           N = as.vector(unname(tabAbs)), 
-           Percentage = as.vector(unname(tabRel)))
+                     N = as.vector(unname(tabAbs)), 
+                     Percentage = as.vector(unname(tabRel)))
 #### Saving quantitative Amanida results ####
-# saveRDS(object = tabOut, file = "../../Data/4_Metanalisis/assessmentAnalysis/contributionAnalysis_quantitativeAmanida.rds")
 xlsx::write.xlsx(x = tabOut, col.names = T, row.names = F, append = T,
                  file = "results_Quantitative.xlsx", sheetName = "Contribution analysis")
 
