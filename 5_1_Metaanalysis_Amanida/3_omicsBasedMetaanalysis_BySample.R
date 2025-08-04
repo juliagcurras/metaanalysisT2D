@@ -18,7 +18,7 @@ basal <- basal %>% filter(ID != "1098_977")
 table(basal$`Type of sample (grouped)`)
 # Quantitative data (list of proteins by study)
 dataOriginal <- readxl::read_xlsx(path = "../4_Processing/allProcessedProteinData.xlsx", 
-                          sheet = "Quantitative (>2 studies)", col_names = T)
+                          sheet = "Quantitative (protein>1 study)", col_names = T)
 # Diccionary 
 diccionary <- dataOriginal %>%
   group_by(ProteinID) %>%
@@ -43,7 +43,7 @@ diccionary$Alias <- gsub(diccionary$Alias, pattern = "NA;", replacement = "", fi
 ## Processing data ####
 # Selecting dataframes of interest #
 basalQ <- basal %>% 
-  filter(`Type of sample (grouped)` %in% c("Serum", "Plasma")) 
+  filter(`Type of sample (grouped)` %in% c("Serum", "Plasma", "Saliva;Plasma")) 
 df <- dataOriginal %>% filter(ID %in% c(basalQ$ID, "1027_15_Pla"))
 table(df$ID)
 

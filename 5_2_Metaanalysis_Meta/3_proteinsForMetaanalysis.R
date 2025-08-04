@@ -15,7 +15,7 @@ library(dplyr)
 # Initial data ####
 ## Selecting list of proteins from each study that provided raw data ####
 data <- readxl::read_xlsx(path = "../4_Processing/allProcessedProteinData.xlsx", 
-                          sheet = "Quantitative (all)", col_names = T)
+                          sheet = "Quantitative (23 studies)", col_names = T)
 rawData <- c("16_128", "284_268", "377_100", "425_58", "432_287", "446_99", 
              "440_211", "511_252", "944_401", "231_253", "499_339", "1046_653") # raw data studies
 df <- data %>%

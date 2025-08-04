@@ -224,7 +224,7 @@ dfProts$logfcNew <- NULL
 #.------- SAVING ------.####
 xlsx::write.xlsx(x = dfProts,
                  file = "allProcessedProteinData.xlsx",
-                 col.names = T, sheetName = "All",
+                 col.names = T, sheetName = "Qualitative (27 studies)",
                  showNA = F, row.names = F, append = F
                  )
 
@@ -247,7 +247,7 @@ length(unique(dfFinal$ID))
 #.------- SAVING ------.####
 xlsx::write.xlsx(x = dfFinal,
                  file = "allProcessedProteinData.xlsx",
-                 col.names = T, sheetName = "Qualitative (> 2 studies)",
+                 col.names = T, sheetName = "Qualitative (proteins> 1 studies)",
                  showNA = F, row.names = F, append = T
                  )
 
@@ -285,12 +285,12 @@ dfAmanidaFiltered <- dfAmanida %>% filter(ProteinID %in% names(interestingFrec))
 #.------- SAVING ------.####
 xlsx::write.xlsx(x = dfAmanida,
                  file = "allProcessedProteinData.xlsx",
-                 col.names = T, sheetName = "Quantitative (all)",
+                 col.names = T, sheetName = "Quantitative (23 studies)",
                  showNA = F, row.names = F, append = T
 )
 xlsx::write.xlsx(x = dfAmanidaFiltered,
                  file = "allProcessedProteinData.xlsx",
-                 col.names = T, sheetName = "Quantitative (> 2 studies)",
+                 col.names = T, sheetName = "Quantitative (protein>1 stud.)",
                  showNA = F, row.names = F, append = T
 )
 

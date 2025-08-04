@@ -95,7 +95,7 @@ colnames(data) # ok
 
 # Protein IDs
 dfIDS <- readxl::read_xlsx(path = "../4_Processing/allProcessedProteinData.xlsx", 
-                          sheet = "Quantitative (>2 studies)", col_names = T)
+                          sheet = "Quantitative (protein>1 protein)", col_names = T)
 df <- dfIDS %>% 
   filter(ID == "511_252") %>% 
   dplyr::select(ProteinID, ProteinName)
