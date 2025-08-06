@@ -247,7 +247,7 @@ length(unique(dfFinal$ID))
 #.------- SAVING ------.####
 xlsx::write.xlsx(x = dfFinal,
                  file = "allProcessedProteinData.xlsx",
-                 col.names = T, sheetName = "Qualitative (proteins> 1 studies)",
+                 col.names = T, sheetName = "Qualitative (proteins> 1 study)",
                  showNA = F, row.names = F, append = T
                  )
 
@@ -290,7 +290,7 @@ xlsx::write.xlsx(x = dfAmanida,
 )
 xlsx::write.xlsx(x = dfAmanidaFiltered,
                  file = "allProcessedProteinData.xlsx",
-                 col.names = T, sheetName = "Quantitative (protein>1 stud.)",
+                 col.names = T, sheetName = "Quantitative (protein>1 study)",
                  showNA = F, row.names = F, append = T
 )
 
