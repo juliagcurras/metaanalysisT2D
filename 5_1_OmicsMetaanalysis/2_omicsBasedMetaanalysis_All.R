@@ -8,12 +8,12 @@
 # Julia G Currás - 2025/04/23
 rm(list=ls())
 graphics.off()
+# setwd() # set working directory to the current directory
 library(dplyr)
 library(amanida)
 library(clusterProfiler)
 library(org.Hs.eg.db)
-pathTofigures <- ""
-pathToData <- ""
+
 set.seed(9396)
 
 
@@ -89,6 +89,7 @@ output <- list(result = amanida_result, data = datafile)
 ### Vote counting results ####
 # Adapted from Amanida #
 counts = 3
+cuts = counts
 type = "sub"
 trend = NULL
 trend_l = NULL
@@ -107,7 +108,7 @@ data_wide <- dt %>%
   pivot_wider(names_from = trend_l, values_from = cont) %>%
   dplyr::select(-total_N, -lab, -vc)
 dfFinal <- merge(data_wide, amanida_result@vote, all.X = T, by = "id")
-dfFinal <- merge(dfFinal, diccionario, by.x = "id", by.y = "ProteinID", all.x = T)
+dfFinal <- merge(dfFinal, diccionary, by.x = "id", by.y = "ProteinID", all.x = T)
 dfFinal <- dfFinal %>% 
   dplyr::select(id, Alias, everything()) %>%
   dplyr::rename(
@@ -119,7 +120,7 @@ dfFinal <- dfFinal %>%
   ) %>%
   arrange(desc(Votes))
 dfFinal[is.na(dfFinal)] <- 0
-xlsx::write.xlsx(x = as.data.frame(amanida_result@vote), 
+xlsx::write.xlsx(x = dfFinal, 
                  col.names = T, row.names = F, append = T,
                  file = "results_Qualitative.xlsx", 
                  sheetName = "Vote counting")
@@ -223,6 +224,7 @@ vote_plot(amanida_result, counts = 5)
 amanida_result <- amanida_result_Ori
 ### Contribution analysis ####
 dfRes <- amanida_result@stat 
+tabAbs <- table(unlist(strsplit(dfRes$reference, split = "; ", fixed = T)))
 tabRel <- tabAbs/length(unique(data$ProteinID))
 
 tabOut <- data.frame(Reference = names(tabRel), 
@@ -288,7 +290,6 @@ influenceAnalysis <- function(pathToFile){
 salida <- influenceAnalysis(pathToFile = pathToFile)
 
 #### Saving quantitative Amanida results ####
-# saveRDS(object = salida, file = "../../Data/4_Metanalisis/assessmentAnalysis/influenceAnalysis_quantitativeAmanida.rds")
 xlsx::write.xlsx(x = salida$table, col.names = T, row.names = F, append = T,
                  file = "results_Quantitative.xlsx", sheetName = "Influence analysis")
 
@@ -341,7 +342,6 @@ cgeBP@result <- cgeBP@result %>% filter(ONTOLOGY == "BP")
 ridgeplot(cgeBP, fill = "pvalue", showCategory = 15) + labs(x = "enrichment distribution")
 gseaplot(cgeBP, by = "all", title = cgeBP$Description[2], geneSetID = 2)
 
-# saveRDS(object = cgsea_res, file = "../../Data/4_Metanalisis/functionalAnalysis/GSEA_GO_LogfcPval.rds")
 xlsx::write.xlsx(x = as.data.frame(cgsea_res@result), 
                  col.names = T, row.names = F, append = T,
                  file = "results_Quantitative.xlsx", 
@@ -387,7 +387,6 @@ cgeBP@result <- cgeBP@result %>% filter(ONTOLOGY == "BP")
 ridgeplot(cgeBP, fill = "pvalue", showCategory = 15) + labs(x = "enrichment distribution")
 gseaplot(cgeBP, by = "all", title = cgeBP$Description[2], geneSetID = 2)
 
-# saveRDS(object = cgsea_res, file = "../../Data/4_Metanalisis/functionalAnalysis/GSEA_GO_Logfc.rds")
 xlsx::write.xlsx(x = as.data.frame(cgsea_res@result), 
                  col.names = T, row.names = F, append = T,
                  file = "results_Quantitative.xlsx", 
@@ -414,7 +413,7 @@ rbioapi::rba_string_network_image(ids = targetID$stringId,
                                   required_score = 400,
                                   image_format = "image",
                                   node_labels_font_size = 20, 
-                                  save_image = file.path("STRING_quantitative.png"),
+                                  save_image = file.path("STRING_quantitative_filterProts_1.png"),
                                   species = 9606) # only query proteins
 
 int_net <- rbioapi::rba_string_interactions_network(ids = targetID$stringId, # todas
@@ -435,7 +434,6 @@ colnames(dfInfo) <- c("UniProt ID", "Protein name", "p-value",
                       "logFC", "Description", "Nº references", "References")
 
 # output <- list(tableNet = int_net, tableTest = int_test, tableInfo = dfInfo)
-# saveRDS(output, file = paste0(pathToData, "interactionAnalysis/STRING_net_test_quantitative.RDS"))
 xlsx::write.xlsx(x = dfInfo, 
                  col.names = T, row.names = F, append = T,
                  file = "results_Quantitative.xlsx", 
@@ -454,7 +452,7 @@ rbioapi::rba_string_network_image(ids = targetID$stringId,
                                   required_score = 500,
                                   image_format = "image",
                                   node_labels_font_size = 20, 
-                                  save_image = file.path("STRING_quantitative_2.png"),
+                                  save_image = file.path("STRING_quantitative_filterProts_2.png"),
                                   species = 9606) # only query proteins
 
 int_net <- rbioapi::rba_string_interactions_network(ids = targetID$stringId, # todas
@@ -475,8 +473,6 @@ dfInfo <- dfInfo %>%
 colnames(dfInfo) <- c("UniProt ID", "Protein name", "p-value", 
                       "logFC", "Description", "Nº references", "References")
 
-# output <- list(tableNet = int_net, tableTest = int_test, tableInfo = dfInfo)
-# saveRDS(output, file = paste0(pathToData, "interactionAnalysis/STRING_net_test_quantitative_more2.RDS"))
 xlsx::write.xlsx(x = dfInfo, 
                  col.names = T, row.names = F, append = T,
                  file = "results_Quantitative.xlsx", 

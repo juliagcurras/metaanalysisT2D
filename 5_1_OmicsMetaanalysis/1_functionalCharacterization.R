@@ -10,8 +10,7 @@
 # Setup ####
 rm(list=ls())
 graphics.off()
-pathTofigures <- ""
-pathToData <- ""
+# setwd() # set working directory to the current directory
 library(dplyr)
 library(rbioapi)
 library(clusterProfiler) 

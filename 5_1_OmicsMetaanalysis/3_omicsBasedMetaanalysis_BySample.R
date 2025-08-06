@@ -195,6 +195,7 @@ df <- df %>% filter(!is.na(logFC))
 allFrec <- table(df$ProteinID)
 table(allFrec) # 1529 proteins únicas, 625 en al menos 2 estudios, 163 en al menos 3 estudios, 38 en 4 estudios
 interestingFrec <- allFrec[which(allFrec > 1)]
+df <- df %>% filter(ProteinID %in% names(interestingFrec))
 
 # Adding N info #
 basalQ$TotalN <- basalQ$SampleSizeControls + basalQ$SampleSizeDiabetics
@@ -227,14 +228,13 @@ datafile <- amanida_read(
 # Analyzing... #
 amanida_result <- compute_amanida(datafile, comp.inf = F)
 
-
 # Changing protein ids by protein names
 amanida_result@stat$id <- diccionary[amanida_result@stat$id, "Alias"]
 amanida_result@vote$id <- diccionary[amanida_result@vote$id, "Alias"]
 
 # Displaying results #
 volcano_plot(amanida_result, cutoff = c(0.05, 4))
-vote_plot(amanida_result, counts = 2)
+vote_plot(amanida_result, counts = 1)
 explore_plot(datafile, type = "sub", counts = 1)
 
 ## Saving URINE results ####
@@ -372,7 +372,7 @@ amanida_result@vote$id <- diccionary[amanida_result@vote$id, "Alias"]
 
 # Displaying results #
 volcano_plot(amanida_result, cutoff = c(0.05, 6))
-vote_plot(amanida_result, counts = 2)
+vote_plot(amanida_result, counts = 1)
 explore_plot(datafile, type = "sub", counts = 1)
 
 ## Saving EV results ####
@@ -441,7 +441,7 @@ amanida_result@vote$id <- diccionary[amanida_result@vote$id, "Alias"]
 
 # Displaying results #
 volcano_plot(amanida_result, cutoff = c(0.05, 2))
-vote_plot(amanida_result, counts = 2)
+vote_plot(amanida_result, counts = 1)
 explore_plot(datafile, type = "sub", counts = 1)
 
 ## Saving quantitative Amanida results ####
