@@ -8,19 +8,19 @@
 
 rm(list=ls())
 graphics.off()
-search_directory <- ""
-setwd(search_directory)
+currentDir <- ""
+setwd(currentDir)
 library(dplyr)
 
 
 
 # Manually ####
 ## Open data ####
-scopus <-  read.csv(file = paste0(search_directory, "/1_scopus.csv"), header = T)
-pubmed <- read.csv(file = paste0(search_directory, "/2_Pubmed.csv"), header = T)
-pubmed_2 <- read.csv(file = paste0(search_directory, "/2_PubMed_FromPubmed_format.csv"), 
+scopus <-  read.csv(file =  "1_scopus.csv", header = T)
+pubmed <- read.csv(file = "2_Pubmed.csv", header = T)
+pubmed_2 <- read.csv(file = "2_PubMed_FromPubmed_format.csv", 
                    header = T, check.names = F) # From Pubmedtocsv shiny app https://jgcurras.shinyapps.io/pubmedtocsv/
-wos <- read.csv(file = paste0(search_directory, "/3_WOS.csv"), header = T, sep = ";")
+wos <- read.csv(file = "3_WOS.csv", header = T, sep = ";")
 
 ### Extract abstract from pubmed ####
 # pubmed_abstract <- read.table(file = paste0(search_directory, "2_PubMed_abstract.txt"))
@@ -133,7 +133,7 @@ vectorVenn <- list(
 )
 
 vectorVenn <- lapply(vectorVenn, na.omit) # se eliminan 56
-venn.diagram(vectorVenn, filename = "doi.png", # Hay valores perdidos en DOI!
+venn.diagram(vectorVenn, filename = "doi_.png", # Hay valores perdidos en DOI!
              fill = Biostatech::colorPalette(n=3), # 505 en las 3 bases de datos
              cat.cex = 1.5)
 
@@ -171,7 +171,7 @@ dataFinal <- dataFinal %>% filter(!is.na(DOI))
 
 
 ## SAVING ####
-xlsx::write.xlsx(dataFinal, file = "finalSearchDocuments.xlsx", 
+xlsx::write.xlsx(dataFinal, file = "finalSearchDocuments_.xlsx", 
                  col.names = T, row.names = T, showNA = F)
 
 

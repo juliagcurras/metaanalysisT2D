@@ -15,7 +15,7 @@ setwd(raizDir)
 # MORE RESTRICTIVE APPROACH ####
 
 ## 1. Load data and remove duplicated papers ####
-search_directory <- paste0(raizDir, "/ris")
+search_directory <- paste0(raizDir, "/ris") # NEED AN ABSOLUTE DIRECTORY
 naiveimport <- litsearchr::import_results(directory = search_directory,  
                                           verbose = TRUE)
 naiveresults <-litsearchr::remove_duplicates(naiveimport, 
@@ -61,17 +61,32 @@ naivegraph <-
   )
 
 par(mar = c(1,1,1,1))
-plot(naivegraph, 
-     layout = igraph::layout_with_fr, 
-     vertex.size = 2, # Cambia el tamaño de los nodos
-     vertex.label.cex = 1, # Cambia el tamaño de las etiquetas
-     vertex.label.dist = 1.5,
-     vertex.label.color = "#6A1B9A",  # Etiquetas en púrpura oscuro
-     vertex.frame.color = "#FFB300",  # Borde y nodo amarillo mostaza
-     vertex.color = "#FFB300",
-     edge.color = "gray",
-     vertex.label.dist =20, # Aumenta la distancia entre las etiquetas y los nodos
-     margin = 0.0001)
+p1 <- plot(naivegraph, 
+           layout = igraph::layout_with_fr, 
+           vertex.size = 2, # Cambia el tamaño de los nodos
+           vertex.label.cex = 1, # Cambia el tamaño de las etiquetas
+           vertex.label.dist = 1.5,
+           vertex.label.color = "#6A1B9A",  # Etiquetas en púrpura oscuro
+           vertex.frame.color = "#FFB300",  # Borde y nodo amarillo mostaza
+           vertex.color = "#FFB300",
+           edge.color = "gray",
+           vertex.label.dist =20, # Aumenta la distancia entre las etiquetas y los nodos
+           margin = 0.0001)
+
+svg("networkAllTerms.svg", width = 35, height = 30)
+plot(
+  naivegraph, 
+  # layout = igraph::layout_with_fr, 
+  vertex.size = 4.5, 
+  vertex.label.cex = 3.5, 
+  vertex.label.dist = 0.5,
+  vertex.label.color = "#6A1B9A",  
+  vertex.frame.color = "#FFB300",  
+  vertex.color = "#FFB300",
+  edge.color = "gray",
+  margin = 0.0001
+)
+dev.off()
 
 
 ## 4. Network reduction by cut-off selection ####
@@ -86,33 +101,25 @@ cutoff <-
 reducedgraph <-
   litsearchr::reduce_graph(naivegraph, cutoff_strength = cutoff[1])
 
-par(mar = c(1,1,1,1))
+svg("networkFilteredTerms.svg", width = 35, height = 30)
 plot(reducedgraph, 
      layout = igraph::layout_with_fr, 
-     vertex.size = 2, # Cambia el tamaño de los nodos
-     vertex.label.cex = 1, # Cambia el tamaño de las etiquetas
-     vertex.label.dist = 1.5,
+     vertex.size = 5, # Cambia el tamaño de los nodos
+     vertex.label.cex = 3.5, # Cambia el tamaño de las etiquetas
+     vertex.label.dist = 0.5,
      vertex.label.color = "#000000",  # Etiquetas en negro
      vertex.frame.color = "#FF7043",  # Borde y nodo naranja brillante
      vertex.color = "#FF7043",
      edge.color = "gray",
      vertex.label.dist =20, # Aumenta la distancia entre las etiquetas y los nodos
      margin = 0.0001)
+dev.off()
 
 
 searchterms <- litsearchr::get_keywords(reducedgraph)
 
-output <- list(nTotal = nrow(naiveimport), 
-               nUnique = nrow(naiveresults), 
-               nKeywords = length(all_keywords), 
-               naiveGraph = naivegraph, 
-               threshold = cutoff, 
-               reducedGraph = reducedgraph,
-               searchTerms = searchterms)
-
-
 ## 5. Group terms into concepts - MANUALLY ####
-write.csv(searchterms, paste0(raizDir, "TERMS_RestrictiveApproachLitSearch.csv"))
+write.csv(searchterms, "TERMS_RestrictiveApproachLitSearch.csv")
 
 
 
@@ -120,7 +127,7 @@ write.csv(searchterms, paste0(raizDir, "TERMS_RestrictiveApproachLitSearch.csv")
 
 
 ## 6. Select and add new terms ####
-grouped_terms <- read.csv(paste0(raizDir, "/TERMS_RestrictiveApproachLitSearch_reduced.csv"), sep = ";")[,-1]
+grouped_terms <- read.csv("TERMS_RestrictiveApproachLitSearch_reduced.csv", sep = ";")[,-1]
 colnames(grouped_terms)[1] <- "term"
 
 # extract the woodpecker terms from the csv
