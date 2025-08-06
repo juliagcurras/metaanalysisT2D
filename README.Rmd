@@ -1,0 +1,29 @@
+---
+output: github_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "100%",
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+
+library(knitr)
+```
+
+# metaanalysisT2D
+
+This repository contains all code used for the PROSPERO [CRD42025648346](https://www.crd.york.ac.uk/PROSPERO/view/CRD42025648346) meta-analysis (proteomic biomarkers for T2D).
+
+Clone the repository to access locally to all the scripts and material: [https://jgcurras.shinyapps.io/metaanalysisT2D/](https://jgcurras.shinyapps.io/metaanalysisT2D/). 
+
+
+
+
