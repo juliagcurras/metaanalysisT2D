@@ -122,7 +122,7 @@ dfFinal <- dfFinal %>%
 dfFinal[is.na(dfFinal)] <- 0
 xlsx::write.xlsx(x = dfFinal, 
                  col.names = T, row.names = F, append = T,
-                 file = "results_Qualitative.xlsx", 
+                 file = "../5_1_QualitativeAssessment/results_Qualitative.xlsx", 
                  sheetName = "Vote counting")
 
 
